@@ -12,7 +12,7 @@ df_input_owsa <- f_input(n_sim = n_sim, setting = n_setting) # generate input pa
 df_input_owsa <- df_input_owsa[, apply(df_input_owsa, 2, var, na.rm = TRUE) != 0] # only select parameters with variance > 0
 
 #### Obtain deterministic sensitivity analyses ----
-# Obtain OWSA object
+##### Obtain OWSA object ##### 
 obj_owsa_dam <- run_owsa_det( # generate dampack OWSA object
   params_range = data.frame( # dataframe to be used for OWSA
     pars = names(df_input_owsa), # parameter names
@@ -27,7 +27,7 @@ obj_owsa_dam <- run_owsa_det( # generate dampack OWSA object
   progress = TRUE # show progression in console
 ) # end run_owsa_det
 
-# Inputs for TWSA
+##### Inputs for TWSA ##### 
 df_twsa_pairs <- if(n_setting == 1) {
   data.frame(
     twsa_1 = c("cost_t2", 
@@ -44,8 +44,8 @@ df_twsa_pairs <- if(n_setting == 1) {
                "cost_prev_arm_lymphedema_event"),
     twsa_7 = c("p_arm_lymphedema_m72", 
                "cost_arm_lymphedema"),
-    twsa_8 = c("AI_se_arm_lymphedema", 
-               "AI_sp_arm_lymphedema")
+    twsa_8 = c("p_AI_se_arm_lymphedema", 
+               "p_AI_sp_arm_lymphedema")
   )} else if(n_setting == 2) {
     data.frame(
       twsa_1 = c("cost_t2", 
@@ -62,8 +62,8 @@ df_twsa_pairs <- if(n_setting == 1) {
                  "cost_prev_arm_lymphedema_event"),
       twsa_7 = c("p_arm_lymphedema_m72", 
                  "cost_arm_lymphedema"),
-      twsa_8 = c("AI_se_arm_lymphedema", 
-                 "AI_sp_arm_lymphedema")
+      twsa_8 = c("p_AI_se_arm_lymphedema", 
+                 "p_AI_sp_arm_lymphedema")
     )} else if(n_setting == 3) { 
       data.frame(
         twsa_1 = c("cost_t2", 
@@ -80,12 +80,12 @@ df_twsa_pairs <- if(n_setting == 1) {
                    "cost_prev_arm_lymphedema_event"),
         twsa_7 = c("p_arm_lymphedema_m72", 
                    "cost_arm_lymphedema"),
-        twsa_8 = c("AI_se_arm_lymphedema", 
-                   "AI_sp_arm_lymphedema")
+        twsa_8 = c("p_AI_se_arm_lymphedema", 
+                   "p_AI_sp_arm_lymphedema")
       )  
     }
 
-# Obtain TWSA objects
+##### Obtain TWSA objects ##### 
 df_input_twsa <- df_input_owsa[, df_twsa_pairs$twsa_1] 
 obj_twsa_dam_1 <- run_twsa_det( # generate dampack TWSA object
   params_range = data.frame( # dataframe to be used for TWSA
@@ -199,7 +199,7 @@ obj_twsa_dam_8 <- run_twsa_det( # generate dampack TWSA object
 ) # end run_twsa_det
 
 #### Deterministic sensitivity analyses results ----
-# Optimal strategy plots
+##### Optimal strategy plots ##### 
 png(file = paste0("plots/Setting_", n_setting, "_opt_strat_", "QALY.png"), width = 500, height = 500)
 owsa_opt_strat( # gives error as no parameter leads to changes in optimal strategy as they vary
   obj_owsa_dam$owsa_QALY,
@@ -225,7 +225,7 @@ owsa_opt_strat(
 ) # owsa_opt_strat end
 dev.off()
 
-# One way sensitivity analyses plots
+##### One way sensitivity analyses plots ##### 
 png(file = paste0("plots/Setting_", n_setting, "_owsa_", "QALY.png"), width = 1000, height = 700)
 plot(
   obj_owsa_dam$owsa_QALY,
@@ -250,7 +250,7 @@ plot(
 ) # plot end
 dev.off()
 
-# Tornado plots
+##### Tornado plots ##### 
 png(file = paste0("plots/Setting_", n_setting, "_tornado_", "iQALY.png"), width = 700, height = 500)
 owsa_tornado(
   obj_owsa_dam$owsa_iQALY,
@@ -279,7 +279,7 @@ owsa_tornado(
 ) # owsa_tornado end
 dev.off()
 
-# Two way sensitivity analyses strategy plots Cost
+#####  TWSA plots Cost ##### 
 png(file = paste0("plots/Setting_", n_setting, "_twsa_cost_", "1.png"), width = 700, height = 500)
 plot(obj_twsa_dam_1$twsa_Cost)
 dev.off()
@@ -312,7 +312,7 @@ png(file = paste0("plots/Setting_", n_setting, "_twsa_cost_", "8.png"), width = 
 plot(obj_twsa_dam_8$twsa_Cost)
 dev.off()
 
-# Two way sensitivity analyses strategy plots QALY
+##### TWSA plots QALY ##### 
 png(file = paste0("plots/Setting_", n_setting, "_twsa_qaly_", "1.png"), width = 700, height = 500)
 plot(obj_twsa_dam_1$twsa_QALY)
 dev.off()
@@ -345,7 +345,7 @@ png(file = paste0("plots/Setting_", n_setting, "_twsa_qaly_", "8.png"), width = 
 plot(obj_twsa_dam_8$twsa_QALY)
 dev.off()
 
-# Two way sensitivity analyses strategy plots NMB
+##### TWSA plots NMB ##### 
 png(file = paste0("plots/Setting_", n_setting, "_twsa_nmb_", "1.png"), width = 700, height = 500)
 plot(obj_twsa_dam_1$twsa_NMB)
 dev.off()
@@ -378,377 +378,715 @@ png(file = paste0("plots/Setting_", n_setting, "_twsa_nmb_", "8.png"), width = 7
 plot(obj_twsa_dam_8$twsa_NMB)
 dev.off()
 
-#### Obtain deterministic scenario analyses ----
-#deterministic base-case
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
-m_results_scen_0 <- f_model(df_input_scen)
+#### Deterministic scenario analyses ---- 
+##### 0: Base-case ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
+m_results_det_scenario_0 <- f_model(df_input_det_scenario)
 
-# 1 Add WGS costs + AI accuracy (based on all sources) for arm lympedema
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+obj_icers_det_scenario_0 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_0[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_0[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) 
 
-df_input_scen$cost_t2 <- df_input_scen$cost_t2 + if(n_setting == 1) {3850.71171} else 
-  if(n_setting == 2) {3907.620323} else 
-    if(n_setting == 3) {4744.53801}
-df_input_scen$AI_se_arm_lymphedema <- if(n_setting == 1) {0.88} else 
-  if(n_setting == 2) {0.88} else 
-    if(n_setting == 3) {0.88}
-df_input_scen$AI_sp_arm_lymphedema <- if(n_setting == 1) {0.70} else 
-  if(n_setting == 2) {0.70} else 
-    if(n_setting == 3) {0.70}
+##### 1: det_scenario: Perfect biomarker diagnostic accuracy ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-m_results_scen_1 <- f_model(df_input_scen)
+df_input_det_scenario$p_se_biomarker <- 1
+df_input_det_scenario$p_sp_biomarker <- 1
 
-# 2 Adjust arm lymphedema disutility to literature value
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+m_results_det_scenario_1 <- f_model(df_input_det_scenario)
 
-df_input_scen$disutility_arm_lymphedema <- if(n_setting == 1) {-0.099} else 
-  if(n_setting == 2) {-0.099} else 
-    if(n_setting == 3) {-0.099}
+obj_icers_det_scenario_1 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_1[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_1[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-m_results_scen_2 <- f_model(df_input_scen)
+##### 2: det_scenario: Biomarker has no prognostic value ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-# 3 Use of Grade 0/1 arm lymphedema costs instead of Grade 3 arm lymphedema costs
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+df_input_det_scenario$tp_fn_ds1_ds2 <- df_input_det_scenario$tp_tn_ds1_ds2       
+df_input_det_scenario$tp_fn_ds1_death <- df_input_det_scenario$tp_tn_ds1_death   
+df_input_det_scenario$tp_fn_ds2_death <- df_input_det_scenario$tp_tn_ds2_death 
 
-df_input_scen$cost_arm_lymphedema <- if(n_setting == 1) {26.163125} else 
-  if(n_setting == 2) {14.51} else 
-    if(n_setting == 3) {20.59284359}
-df_input_scen$cost_arm_lymphedema_event <- if(n_setting == 1) {313.9575} else 
-  if(n_setting == 2) {174.12} else 
-    if(n_setting == 3) {247.114123}
+m_results_det_scenario_2 <- f_model(df_input_det_scenario)
 
-m_results_scen_3 <- f_model(df_input_scen)
+obj_icers_det_scenario_2 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_2[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_2[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-# 4 Alternative long term arm lymphedema incidence
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+##### 3: det_scenario: Treatment is not effective in 'negative' patients ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-df_input_scen$p_arm_lymphedema_m72 <- if(n_setting == 1) {0.07} else 
-  if(n_setting == 2) {0.07} else 
-    if(n_setting == 3) {0.07}
+df_input_det_scenario$hr_ds1_ds2_negatives <- 1
+df_input_det_scenario$hr_ds1_death_negatives <- 1
+df_input_det_scenario$hr_ds2_death_negatives <- 1
 
-m_results_scen_4 <- f_model(df_input_scen)
+m_results_det_scenario_3 <- f_model(df_input_det_scenario)
 
-# 5 Alternative costs of arm sleeve
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+obj_icers_det_scenario_3 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_3[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_3[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-df_input_scen$cost_prev_arm_lymphedema_event <- if(n_setting == 1) {(539.7094201 * 0.9 * 5/12)} else 
-  if(n_setting == 2) {(652.4742443 * 0.9 * 5/12)} else 
-    if(n_setting == 3) {(805.311062 * 0.9 * 5/12)}
+##### 4: det_scenario: Current practice = treat all ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-m_results_scen_5 <- f_model(df_input_scen)
+df_input_det_scenario$p_se_CP <- 1
+df_input_det_scenario$p_sp_CP <- 0
 
-# 6 Alternative effectiveness of arm sleeve
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+m_results_det_scenario_4 <- f_model(df_input_det_scenario)
 
-df_input_scen$hr_prev_arm_lymphedema <- if(n_setting == 1) {0.7} else 
-  if(n_setting == 2) {0.7} else 
-    if(n_setting == 3) {0.7}
+obj_icers_det_scenario_4 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_4[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_4[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-m_results_scen_6 <- f_model(df_input_scen)
+##### 5: det_scenario: Combine scenarios 3 and 4 ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-# 7 Assume decreased diagnostics accuracy of the PRE-ACT AI tool
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+df_input_det_scenario$hr_ds1_ds2_negatives <- 1
+df_input_det_scenario$hr_ds1_death_negatives <- 1
+df_input_det_scenario$hr_ds2_death_negatives <- 1
 
-df_input_scen$AI_se_arm_lymphedema <- if(n_setting == 1) {0.80} else 
-  if(n_setting == 2) {0.80} else 
-    if(n_setting == 3) {0.80}
-df_input_scen$AI_sp_arm_lymphedema <- if(n_setting == 1) {0.60} else 
-  if(n_setting == 2) {0.60} else 
-    if(n_setting == 3) {0.60}
+df_input_det_scenario$p_se_CP <- 1
+df_input_det_scenario$p_sp_CP <- 0
 
-m_results_scen_7 <- f_model(df_input_scen)
+m_results_det_scenario_5 <- f_model(df_input_det_scenario)
 
-# 8 Assume increased diagnostics accuracy of the PRE-ACT AI tool
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+obj_icers_det_scenario_5 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_5[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_5[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-df_input_scen$AI_se_arm_lymphedema <- if(n_setting == 1) {0.90} else 
-  if(n_setting == 2) {0.90} else 
-    if(n_setting == 3) {0.90}
-df_input_scen$AI_sp_arm_lymphedema <- if(n_setting == 1) {0.70} else 
-  if(n_setting == 2) {0.70} else 
-    if(n_setting == 3) {0.70}
+##### 6: det_scenario: Biomarker has no predictive value ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-m_results_scen_8 <- f_model(df_input_scen)
+df_input_det_scenario$hr_ds1_ds2_negatives <- df_input_det_scenario$hr_ds1_ds2_positives
+df_input_det_scenario$hr_ds1_death_negatives <- df_input_det_scenario$hr_ds1_death_positives
+df_input_det_scenario$hr_ds2_death_negatives <- df_input_det_scenario$hr_ds2_death_positives
 
-# 9 Assumed improved quality of life and work productivity for high-risk patients because of better BMI/physical condition
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+m_results_det_scenario_6 <- f_model(df_input_det_scenario)
 
-df_input_scen$process_utility_tp <- if(n_setting == 1) {0.01} else
-  if(n_setting == 2) {0.01} else
-    if(n_setting == 3) {0.01}
+obj_icers_det_scenario_6 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_6[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_6[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-df_input_scen$process_utility_fp <- if(n_setting == 1) {0.01} else
-  if(n_setting == 2) {0.01} else
-    if(n_setting == 3) {0.01}
+##### 7: det_scenario: Treatment only affects transition to health state 2 ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-df_input_scen$cost_prev_arm_lymphedema_event <- if(n_setting == 1) {df_input_scen$cost_prev_arm_lymphedema_event} else
-  if(n_setting == 2) {df_input_scen$cost_prev_arm_lymphedema_event} else
-    if(n_setting == 3) {-765.7001469} # original cost_prev_arm_lymphedema_event adjusted for cost savings from increased productivity 
+df_input_det_scenario$hr_ds1_death_positives <- 1
+df_input_det_scenario$hr_ds2_death_positives <- 1
 
-m_results_scen_9 <- f_model(df_input_scen)
+df_input_det_scenario$hr_ds1_death_negatives <- 1
+df_input_det_scenario$hr_ds2_death_negatives <- 1
 
-# 10 Assume disutility for high-risk patients related to anxiety when being classified as high risk
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+m_results_det_scenario_7 <- f_model(df_input_det_scenario)
 
-df_input_scen$process_utility_tp_event <- if(n_setting == 1) {-0.001} else 
-  if(n_setting == 2) {-0.001} else 
-    if(n_setting == 3) {-0.001}
+obj_icers_det_scenario_7 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_7[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_7[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-df_input_scen$process_utility_fp_event <- if(n_setting == 1) {-0.001} else 
-  if(n_setting == 2) {-0.001} else 
-    if(n_setting == 3) {-0.001}
+##### 8: det_scenario: Decreased biomarker costs ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-m_results_scen_10 <- f_model(df_input_scen)
+df_input_det_scenario$cost_biomarker <- 4000 
 
-# 11 Assume disutility for patients that developed arm lymphedema but that were classified as low risk, i.e. false negative classification 
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+m_results_det_scenario_8 <- f_model(df_input_det_scenario)
 
-df_input_scen$process_utility_fn <- if(n_setting == 1) {-0.001} else 
-  if(n_setting == 2) {-0.001} else 
-    if(n_setting == 3) {-0.001}
+obj_icers_det_scenario_8 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_8[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_8[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-m_results_scen_11 <- f_model(df_input_scen)
+##### 9: det_scenario: Combine scenarios 4 and 6 ##### 
+df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-# 12 Add unforeseen or additional organizational and training costs 
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+df_input_det_scenario$p_se_CP <- 1
+df_input_det_scenario$p_sp_CP <- 0
 
-df_input_scen$cost_t2 <- df_input_scen$cost_t2 + if(n_setting == 1) {22.05370746} else 
-  if(n_setting == 2) {36.2043966} else 
-    if(n_setting == 3) {37.65182529}
+df_input_det_scenario$hr_ds1_ds2_negatives <- df_input_det_scenario$hr_ds1_ds2_positives
+df_input_det_scenario$hr_ds1_death_negatives <- df_input_det_scenario$hr_ds1_death_positives
+df_input_det_scenario$hr_ds2_death_negatives <- df_input_det_scenario$hr_ds2_death_positives
 
-m_results_scen_12 <- f_model(df_input_scen)
+m_results_det_scenario_9 <- f_model(df_input_det_scenario)
 
-# 13 Assume utility increment for high-risk patients 
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
+obj_icers_det_scenario_9 <- calculate_icers( # create calculate_icers object
+  cost = as.numeric(m_results_det_scenario_9[1:2]), # mean costs per strategy
+  effect = as.numeric(m_results_det_scenario_9[3:4]), # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
 
-df_input_scen$process_utility_tp <- if(n_setting == 1) {0.001} else 
-  if(n_setting == 2) {0.001} else 
-    if(n_setting == 3) {0.001}
-
-df_input_scen$process_utility_fp <- if(n_setting == 1) {0.001} else 
-  if(n_setting == 2) {0.001} else 
-    if(n_setting == 3) {0.001}
-
-m_results_scen_13 <- f_model(df_input_scen)
-
-# 14 Assume utility increment for all patients 
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
-
-df_input_scen$process_utility_tp_event <- if(n_setting == 1) {0.001} else 
-  if(n_setting == 2) {0.001} else 
-    if(n_setting == 3) {0.001}
-
-df_input_scen$process_utility_fp_event <- if(n_setting == 1) {0.001} else 
-  if(n_setting == 2) {0.001} else 
-    if(n_setting == 3) {0.001}
-
-df_input_scen$process_utility_fn_event <- if(n_setting == 1) {0.001} else 
-  if(n_setting == 2) {0.001} else 
-    if(n_setting == 3) {0.001}
-
-df_input_scen$process_utility_tn_event <- if(n_setting == 1) {0.001} else 
-  if(n_setting == 2) {0.001} else 
-    if(n_setting == 3) {0.001}
-
-m_results_scen_14 <- f_model(df_input_scen)
-
-# 15 Assume increased effectiveness of arm sleeve
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
-
-df_input_scen$hr_prev_arm_lymphedema <- if(n_setting == 1) {0.55} else 
-  if(n_setting == 2) {0.55} else 
-    if(n_setting == 3) {0.55}
-
-m_results_scen_15 <- f_model(df_input_scen)
-
-# 16 Combine utility beyond health scenarios 13 and 15
-df_input_scen <- f_input(n_sim = 1, setting = n_setting)
-
-df_input_scen$process_utility_tp <- if(n_setting == 1) {0.001} else 
-  if(n_setting == 2) {0.001} else 
-    if(n_setting == 3) {0.001}
-
-df_input_scen$process_utility_fp <- if(n_setting == 1) {0.001} else 
-  if(n_setting == 2) {0.001} else 
-    if(n_setting == 3) {0.001}
-
-df_input_scen$hr_prev_arm_lymphedema <- if(n_setting == 1) {0.55} else 
-  if(n_setting == 2) {0.55} else 
-    if(n_setting == 3) {0.55}
-
-m_results_scen_16 <- f_model(df_input_scen)
-
-#### Deterministic scenario analyses results ----
+##### Deterministic scenario results Table ##### 
 sink(file = paste0("text/Setting_", n_setting, "_Deterministic_scenario_analyses.txt"))
 cat("\n")
 cat("Deterministic base-case")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_0[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_0[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) 
+obj_icers_det_scenario_0 
 
 cat("\n")
-cat("Deterministic scenario 1")
+cat("Deterministic scenario 1: Perfect biomarker diagnostic accuracy")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_1[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_1[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_1 
 
 cat("\n")
-cat("Deterministic scenario 2")
+cat("Deterministic scenario 2: Biomarker has no prognostic value (only predictive value)")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_2[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_2[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_2 
 
 cat("\n")
-cat("Deterministic scenario 3")
+cat("Deterministic scenario 3: Treatment is not effective in 'negative' patients")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_3[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_3[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_3 
 
 cat("\n")
-cat("Deterministic scenario 4")
+cat("Deterministic scenario 4: Current practice = treat all")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_4[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_4[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_4 
 
 cat("\n")
-cat("Deterministic scenario 5")
+cat("Deterministic scenario 5: Combine scenarios 3 and 4")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_5[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_5[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_5 
 
 cat("\n")
-cat("Deterministic scenario 6")
+cat("Deterministic scenario 6: Biomarker has no predictive value (only prognostic value)")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_6[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_6[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_6
 
 cat("\n")
-cat("Deterministic scenario 7")
+cat("Deterministic scenario 7: Treatment only affects transition to health state 2")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_7[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_7[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_7
 
 cat("\n")
-cat("Deterministic scenario 8")
-cat("\n")
-
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_8[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_8[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
 
 cat("\n")
-cat("Deterministic scenario 9")
+cat("Deterministic scenario 8: Decreased biomarker costs")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_9[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_9[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_8
 
 cat("\n")
-cat("Deterministic scenario 10")
-cat("\n")
-
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_10[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_10[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
 
 cat("\n")
-cat("Deterministic scenario 11")
+cat("Deterministic scenario 9: Combine scenarios 4 and 6")
 cat("\n")
 
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_11[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_11[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
-
-cat("\n")
-cat("Deterministic scenario 12")
-cat("\n")
-
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_12[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_12[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
-
-cat("\n")
-cat("Deterministic scenario 13")
-cat("\n")
-
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_13[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_13[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
-
-cat("\n")
-cat("Deterministic scenario 14")
-cat("\n")
-
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_14[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_14[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
-
-cat("\n")
-cat("Deterministic scenario 15")
-cat("\n")
-
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_15[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_15[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
-
-cat("\n")
-cat("Deterministic scenario 16")
-cat("\n")
-
-calculate_icers( # create calculate_icers object
-  cost = as.numeric(m_results_scen_16[1:2]), # mean costs per strategy
-  effect = as.numeric(m_results_scen_16[3:4]), # mean effects per strategy
-  strategies = v_treatments # vector of strategy names
-) # calculate_icers end
+obj_icers_det_scenario_9
 
 cat("\n")
 sink()
+
+##### Deterministic scenario results Figures #####
+# Cost effectiveness frontiers for scenarios
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_0", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_0, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_1", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_1, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_2", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_2, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_3", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_3, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_4", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_4, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_5", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_5, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_6", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_6, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_7", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_7, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_8", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_8, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_det_scenario_9", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_det_scenario_9, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+#### Probabilistic scenario analyses ---- 
+##### 0: Base-case ##### 
+m_results_prob_scenario_0 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+for (x in 1:n_sim) m_results_prob_scenario_0[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_0[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_0 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 1: prob_scenario: Perfect biomarker diagnostic accuracy ##### 
+m_results_prob_scenario_1 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$p_se_biomarker <- 1
+df_input_prob_scenario$p_sp_biomarker <- 1
+
+for (x in 1:n_sim) m_results_prob_scenario_1[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_1[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_1 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 2: prob_scenario: Biomarker has no prognostic value ##### 
+m_results_prob_scenario_2 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$tp_fn_ds1_ds2 <- df_input_prob_scenario$tp_tn_ds1_ds2       
+df_input_prob_scenario$tp_fn_ds1_death <- df_input_prob_scenario$tp_tn_ds1_death   
+df_input_prob_scenario$tp_fn_ds2_death <- df_input_prob_scenario$tp_tn_ds2_death 
+
+for (x in 1:n_sim) m_results_prob_scenario_2[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_2[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_2 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 3: prob_scenario: Treatment is not effective in 'negative' patients ##### 
+m_results_prob_scenario_3 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$hr_ds1_ds2_negatives <- 1
+df_input_prob_scenario$hr_ds1_death_negatives <- 1
+df_input_prob_scenario$hr_ds2_death_negatives <- 1
+
+for (x in 1:n_sim) m_results_prob_scenario_3[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_3[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_3 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 4: prob_scenario: Current practice = treat all ##### 
+m_results_prob_scenario_4 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$p_se_CP <- 1
+df_input_prob_scenario$p_sp_CP <- 0
+
+for (x in 1:n_sim) m_results_prob_scenario_4[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_4[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_4 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 5: prob_scenario: Combine scenarios 3 and 4 ##### 
+m_results_prob_scenario_5 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$hr_ds1_ds2_negatives <- 1
+df_input_prob_scenario$hr_ds1_death_negatives <- 1
+df_input_prob_scenario$hr_ds2_death_negatives <- 1
+
+df_input_prob_scenario$p_se_CP <- 1
+df_input_prob_scenario$p_sp_CP <- 0
+
+for (x in 1:n_sim) m_results_prob_scenario_5[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_5[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_5 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 6: prob_scenario: Biomarker has no predictive value ##### 
+m_results_prob_scenario_6 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$hr_ds1_ds2_negatives <- df_input_prob_scenario$hr_ds1_ds2_positives
+df_input_prob_scenario$hr_ds1_death_negatives <- df_input_prob_scenario$hr_ds1_death_positives
+df_input_prob_scenario$hr_ds2_death_negatives <- df_input_prob_scenario$hr_ds2_death_positives
+
+for (x in 1:n_sim) m_results_prob_scenario_6[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_6[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_6 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 7: prob_scenario: Treatment only affects transition to health state 2 ##### 
+m_results_prob_scenario_7 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$hr_ds1_death_positives <- 1
+df_input_prob_scenario$hr_ds2_death_positives <- 1
+
+df_input_prob_scenario$hr_ds1_death_negatives <- 1
+df_input_prob_scenario$hr_ds2_death_negatives <- 1
+
+for (x in 1:n_sim) m_results_prob_scenario_7[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_7[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_7 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 8: prob_scenario: Decreased biomarker costs ##### 
+m_results_prob_scenario_8 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$cost_biomarker <- generate_gamma(4000, 500, n_sim, TRUE)
+
+for (x in 1:n_sim) m_results_prob_scenario_8[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_8[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_8 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### 9: prob_scenario: Combine scenarios 4 and 6 ##### 
+m_results_prob_scenario_9 <- matrix( # Matrix to store result 
+  data = NA,
+  nrow = n_sim,
+  ncol = 3 * n_treatments,
+  dimnames = list(1:n_sim, c(paste0("Cost_", v_treatments), paste0("QALY_", v_treatments), paste0("LY_", v_treatments)))
+)
+
+df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
+
+df_input_prob_scenario$p_se_CP <- 1
+df_input_prob_scenario$p_sp_CP <- 0
+
+df_input_prob_scenario$hr_ds1_ds2_negatives <- df_input_prob_scenario$hr_ds1_ds2_positives
+df_input_prob_scenario$hr_ds1_death_negatives <- df_input_prob_scenario$hr_ds1_death_positives
+df_input_prob_scenario$hr_ds2_death_negatives <- df_input_prob_scenario$hr_ds2_death_positives
+
+for (x in 1:n_sim) m_results_prob_scenario_9[x, ] <- f_model(df_input_prob_scenario[x, ])
+
+v_out_mean <- as.vector(colMeans(m_results_prob_scenario_9[, 1:(n_treatments * 2)])) # calculate average results
+
+obj_icers_prob_scenario_9 <- calculate_icers( # create calculate_icers object
+  cost = v_out_mean[1:n_treatments], # mean costs per strategy
+  effect = v_out_mean[(n_treatments + 1):(n_treatments * 2)], # mean effects per strategy
+  strategies = v_treatments # vector of strategy names
+) # calculate_icers end
+
+##### Probabilistic scenario results Table ##### 
+sink(file = paste0("text/Setting_", n_setting, "_Probabilistic_scenario_analyses.txt"))
+cat("\n")
+cat("Probabilistic base-case")
+cat("\n")
+
+obj_icers_prob_scenario_0
+
+cat("\n")
+cat("Probabilistic scenario analysis 1: Perfect biomarker diagnostic accuracy")
+cat("\n")
+
+obj_icers_prob_scenario_1
+
+cat("\n")
+cat("Probabilistic scenario analysis 2: Biomarker has no prognostic value (only predictive value)")
+cat("\n")
+
+obj_icers_prob_scenario_2
+
+cat("\n")
+cat("Probabilistic scenario analysis 3: Treatment is not effective in 'negative' patients")
+cat("\n")
+
+obj_icers_prob_scenario_3
+
+cat("\n")
+cat("Probabilistic scenario analysis 4: Current practice = treat all")
+cat("\n")
+
+obj_icers_prob_scenario_4
+
+cat("\n")
+cat("Probabilistic scenario analysis 5: Combine scenarios 3 and 4")
+cat("\n")
+
+obj_icers_prob_scenario_5
+
+cat("\n")
+cat("Probabilistic scenario analysis 6: Biomarker has no predictive value (only prognostic value)")
+cat("\n")
+
+obj_icers_prob_scenario_6
+
+cat("\n")
+cat("Probabilistic scenario 7: Treatment only affects transition to health state 2")
+cat("\n")
+
+obj_icers_prob_scenario_7
+
+cat("\n")
+
+cat("\n")
+cat("Probabilistic scenario 8: Decreased biomarker costs")
+cat("\n")
+
+obj_icers_prob_scenario_8
+
+cat("\n")
+
+cat("\n")
+cat("Probabilistic scenario 9: Combine scenarios 4 and 6")
+cat("\n")
+
+obj_icers_prob_scenario_9
+
+cat("\n")
+sink()
+
+##### Probabilistic scenario results Figures #####
+# Cost effectiveness frontiers for scenarios
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_0", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_0, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_1", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_1, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_2", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_2, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_3", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_3, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_4", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_4, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_5", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_5, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_6", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_6, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_7", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_7, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_8", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_8, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()
+
+png(file = paste0("plots/Setting_", n_setting, "_CE_frontier_prob_scenario_9", ".png"), width = 1500, height = 1500)
+plot(
+  x = obj_icers_prob_scenario_9, # icers object
+  currency = n_currency, # costs units
+  effect_units = "QALYs", # effects units
+  label = "all" # add label to all strategies
+) # plot end
+dev.off()

@@ -175,10 +175,10 @@ f_model <- function(params, intermediate = FALSE) {
   
   #### Decision tree ----
   decision_tree <- c(
-    tp_cp_biomarker = params$p_prevalence * params$p_se_CP_biomarker,
-    fp_cp_biomarker = (1 - params$p_prevalence) * (1 - params$p_sp_CP_biomarker),
-    fn_cp_biomarker = params$p_prevalence * (1 - params$p_se_CP_biomarker),
-    tn_cp_biomarker = (1 - params$p_prevalence) * params$p_sp_CP_biomarker,
+    tp_biomarker = params$p_prevalence * params$p_se_biomarker,
+    fp_biomarker = (1 - params$p_prevalence) * (1 - params$p_sp_biomarker),
+    fn_biomarker = params$p_prevalence * (1 - params$p_se_biomarker),
+    tn_biomarker = (1 - params$p_prevalence) * params$p_sp_biomarker,
     
     tp_cp = params$p_prevalence * params$p_se_CP,
     fp_cp = (1 - params$p_prevalence) * (1 - params$p_sp_CP),
@@ -286,15 +286,8 @@ f_model <- function(params, intermediate = FALSE) {
   a_tx_costs <- a_state_trace[, , ] * 
     rep(m_treatment_costs, each = n_treatments) *             # Multiply by treatment cost matrix
     rep(m_discount[, 1], each = n_treatments)                 # Multiply by discount factor
-  
-  # a_tx_costs <- a_state_trace * 0                             # Create array with same dimensions as a_state_trace
-  # a_tx_costs[, , c(1, 2, 4, 5)] <- 
-  #   a_state_trace[, , c(1, 2, 4, 5)] *                        # Select health states (treatment for all alive patients that are positively tested)
-  #   #rep(treatment_costs, each = n_treatments) *               # Multiply by treatment costs (based on treatment duration and its costs)
-  #   rep(m_discount[, 1], each = n_treatments)                 # Multiply by discount factor
-  # 
   a_tx_costs[1, 1, ] <- a_tx_costs[1, 1, ] + 
-    a_state_trace[1, 1, ] * params$cost_CP_biomarker          # Add testing costs to cycle 1
+    a_state_trace[1, 1, ] * params$cost_biomarker             # Add testing costs to cycle 1
   a_tx_costs[2, 1, ] <- a_tx_costs[2, 1, ] + 
     a_state_trace[2, 1, ] * params$cost_CP                    # Add testing costs to cycle 1
   

@@ -48,11 +48,11 @@ f_input <- function(n_sim, seed = 12345, setting) {
     p_prevalence = generate_beta(, , n_sim, is_psa, alpha = 150, beta = 50),    
     
     # Diagnostic performance 
-    p_se_CP_biomarker = generate_sp_se_cor(                           
+    p_se_biomarker = generate_sp_se_cor(                           
       mean_sens = 0.850, mean_spec = 0.680, 
       sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,             
       n = n_sim, is_psa = is_psa, seed = seed)[,1],
-    p_sp_CP_biomarker = generate_sp_se_cor(                           
+    p_sp_biomarker = generate_sp_se_cor(                           
       mean_sens = 0.850, mean_spec = 0.680, 
       sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,             
       n = n_sim, is_psa = is_psa, seed = seed)[,2],
@@ -61,7 +61,7 @@ f_input <- function(n_sim, seed = 12345, setting) {
     p_sp_CP = generate_static(1, n_sim, is_psa),                                                          # Assumption = treat none
     
     # Test costs
-    cost_CP_biomarker = generate_gamma(6000, 500, n_sim, is_psa),        
+    cost_biomarker = generate_gamma(6000, 500, n_sim, is_psa),        
     cost_CP = generate_static(0, n_sim, is_psa),           
     
     ##### State-transition parameters ----
