@@ -48,24 +48,27 @@ f_input <- function(n_sim, seed = 12345, setting) {
     p_prevalence = generate_beta(, , n_sim, is_psa, alpha = 150, beta = 50),    
     
     # Diagnostic performance 
-    p_se_biomarker = generate_sp_se_cor(                           
-      mean_sens = 0.850, mean_spec = 0.680, 
-      sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,             
-      n = n_sim, is_psa = is_psa, seed = seed)[,1],
-    p_sp_biomarker = generate_sp_se_cor(                           
-      mean_sens = 0.850, mean_spec = 0.680, 
-      sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,             
-      n = n_sim, is_psa = is_psa, seed = seed)[,2],
+    p_se_biomarker = generate_static(1, n_sim, is_psa), 
+    p_sp_biomarker = generate_static(1, n_sim, is_psa), 
+    p_se_CP = generate_static(0, n_sim, is_psa),                                                          # Assumption = all receive treatment for negatives 
+    p_sp_CP = generate_static(1, n_sim, is_psa),                                                          # Assumption = all receive treatment for negatives 
     
-    p_se_CP = generate_static(0, n_sim, is_psa),                                                          # Assumption = treat none
-    p_sp_CP = generate_static(1, n_sim, is_psa),                                                          # Assumption = treat none
+    # Example for diagnostic performance with sp and se correlation
+    # p_se_biomarker = generate_sp_se_cor(                           
+    #   mean_sens = 0.850, mean_spec = 0.680, 
+    #   sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,             
+    #   n = n_sim, is_psa = is_psa, seed = seed)[,1],
+    # p_sp_biomarker = generate_sp_se_cor(                           
+    #   mean_sens = 0.850, mean_spec = 0.680, 
+    #   sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,             
+    #   n = n_sim, is_psa = is_psa, seed = seed)[,2],
     
     # Test costs
     cost_biomarker = generate_gamma(6000, 500, n_sim, is_psa),        
     cost_CP = generate_static(0, n_sim, is_psa),           
     
     ##### State-transition parameters ----
-    # State-transition model probabilities (for untreated patients)
+    # State-transition model probabilities (for patients receiving CAU)
     tp_fn_ds1_ds2 = generate_beta(0.200, 0.021, n_sim, is_psa),    
     tp_fn_ds1_death = generate_beta(0.100, 0.021, n_sim, is_psa),  
     tp_fn_ds2_death = generate_beta(0.200, 0.021, n_sim, is_psa),  
@@ -74,7 +77,7 @@ f_input <- function(n_sim, seed = 12345, setting) {
     tp_tn_ds1_death = generate_beta(0.050, 0.021, n_sim, is_psa),  
     tp_tn_ds2_death = generate_beta(0.075, 0.021, n_sim, is_psa),  
     
-    # Relative treatment effectiveness (to calculate tp for treated patients)
+    # Relative treatment effectiveness for TP and FP (to calculate tp for treated patients)
     hr_ds1_ds2_positives = generate_lognormal(mean = 0.50, ci_low = 0.35, ci_high = 0.85, n_sim, is_psa),
     hr_ds1_death_positives = generate_lognormal(mean = 0.80, ci_low = 0.70, ci_high = 0.95, n_sim, is_psa),
     hr_ds2_death_positives = generate_lognormal(mean = 0.80, ci_low = 0.70, ci_high = 0.95, n_sim, is_psa),
@@ -98,9 +101,13 @@ f_input <- function(n_sim, seed = 12345, setting) {
     
     utility_death = generate_static(0, n_sim, is_psa),                                                   # Assumption
     
-    # Treatment costs (currently assumed that only patients in states 1, 2 and 4, 5 will be treated)
-    cost_treatment = generate_gamma(400, 5, n_sim, is_psa),                                             # Cost per monthly cycle
-    cost_treatment_duration = generate_gamma(4, 2, n_sim, is_psa),                                      # Treatment duration; number of monthly cycles
+    # Treatment costs positives (for patients in states 1, 2 and 4, 5)
+    cost_treatment_positives = generate_gamma(400, 50, n_sim, is_psa),                                    # Cost per monthly cycle
+    cost_treatment_duration_positives = generate_gamma(4, 4, n_sim, is_psa),                             # Treatment duration; number of monthly cycles
+    
+    # Treatment costs negatives (for patients in states 7, 8 and 10, 11)
+    cost_treatment_negatives = generate_gamma(25, 5, n_sim, is_psa),                                    # Cost per monthly cycle
+    cost_treatment_duration_negatives = generate_gamma(8, 1, n_sim, is_psa),                             # Treatment duration; number of monthly cycles  
     
     # Health state costs
     cost_tp_ds_1 = generate_gamma(20, 5, n_sim, is_psa),         

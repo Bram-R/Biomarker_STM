@@ -257,9 +257,10 @@ f_model <- function(params, intermediate = FALSE) {
                      params$cost_death),         # Cost for health state 12 
                    nrow = n_t + 1, ncol = n_states, byrow = TRUE)
   
-  # Treatment costs (only for positively tested patients that are alive, i.e. health states 1, 2, 4 and 5)
+  # Treatment costs 
   m_treatment_costs <- m_cost * 0
-  m_treatment_costs[1:(round(params$cost_treatment_duration)), c(1, 2, 4, 5)] <- params$cost_treatment
+  m_treatment_costs[1:(round(params$cost_treatment_duration_positives)), c(1, 2, 4, 5)] <- params$cost_treatment_positives    # for positively tested patients that are alive, i.e. health states 1, 2, 4 and 5
+  m_treatment_costs[1:(round(params$cost_treatment_duration_negatives)), c(7, 8, 10, 11)] <- params$cost_treatment_negatives  # for negatively tested patients that are alive, i.e. health states 7, 8, 10 and 11
   
   # Health state utility
   m_utility <- matrix(c(params$utility_tp_ds_1,  # Utility for health state 1
