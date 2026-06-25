@@ -15,7 +15,6 @@ state_labels <- list(
   state3 = c(v_states[3], "4,0!")
 )
 
-
 transitions <- data.frame(
   from = c("state1", "state1", "state1", 
            "state2", "state2", 
