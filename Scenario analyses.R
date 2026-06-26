@@ -21,11 +21,11 @@ obj_icers_det_scenario_0 <- calculate_icers( # create calculate_icers object
 ##### 1: det_scenario: Imperfect biomarker diagnostic accuracy ##### 
 df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-df_input_prob_scenario$p_se_biomarker <- generate_sp_se_cor(
+df_input_det_scenario$p_se_biomarker <- generate_sp_se_cor(
   mean_sens = 0.850, mean_spec = 0.680,
   sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,
   n = n_sim, is_psa = FALSE, seed = 1234)[,1]
-df_input_prob_scenario$p_sp_biomarker <- generate_sp_se_cor(
+df_input_det_scenario$p_sp_biomarker <- generate_sp_se_cor(
   mean_sens = 0.850, mean_spec = 0.680,
   sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,
   n = n_sim, is_psa = FALSE, seed = 1234)[,2]
