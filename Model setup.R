@@ -27,7 +27,7 @@ rm(required_packages, new_packages, d, dirs)
 source("f_stm_diagram.R")          # check function using: docstring(f_stm_diagram)
 source("f_input.R")                # check function using: docstring(f_input)
 source("f_model.R")                # check function using: docstring(f_model)
-source("f_wrapper.R")              # check function using: docstring(f_wrapper_sa) docstring(f_wrapper_intermediate)
+source("f_wrapper.R")              # check function using: docstring(f_run_sa) docstring(f_run_intermediate)
 source("f_gen_pop_utility.R")      # check function using: docstring(f_gen_pop_utility)
 source("f_gen_pop_mortality.R")    # check function using: docstring(f_gen_pop_mortality)
 
@@ -50,7 +50,7 @@ v_treatments <- c("Current_practice_with_biomarker",
 n_treatments <- length(v_treatments)                    # Number of treatments
 
 n_t <- 40 * 12                                          # Number of monthly cycles/ model time horizon
-n_sim <- 5000                                           # Number of Monte Carlo simulations
+n_sim <- 3000                                           # Number of Monte Carlo simulations
 
 n_incidence <- 1000                                     # Annual incidence (for population EVPI)
 n_evpi_years <- 10                                      # Technology lifetime (for population EVPI)

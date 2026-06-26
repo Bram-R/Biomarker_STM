@@ -18,11 +18,17 @@ obj_icers_det_scenario_0 <- calculate_icers( # create calculate_icers object
   strategies = v_treatments # vector of strategy names
 ) 
 
-##### 1: det_scenario: Perfect biomarker diagnostic accuracy ##### 
+##### 1: det_scenario: Imperfect biomarker diagnostic accuracy ##### 
 df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-df_input_det_scenario$p_se_biomarker <- 1
-df_input_det_scenario$p_sp_biomarker <- 1
+df_input_prob_scenario$p_se_biomarker <- generate_sp_se_cor(
+  mean_sens = 0.850, mean_spec = 0.680,
+  sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,
+  n = n_sim, is_psa = FALSE, seed = 1234)[,1]
+df_input_prob_scenario$p_sp_biomarker <- generate_sp_se_cor(
+  mean_sens = 0.850, mean_spec = 0.680,
+  sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,
+  n = n_sim, is_psa = FALSE, seed = 1234)[,2]
 
 m_results_det_scenario_1 <- f_model(df_input_det_scenario)
 
@@ -126,10 +132,10 @@ obj_icers_det_scenario_7 <- calculate_icers( # create calculate_icers object
   strategies = v_treatments # vector of strategy names
 ) # calculate_icers end
 
-##### 8: det_scenario: Decreased biomarker costs ##### 
+##### 8: det_scenario: Alternative biomarker costs ##### 
 df_input_det_scenario <- f_input(n_sim = 1, setting = n_setting)
 
-df_input_det_scenario$cost_biomarker <- 4000 
+df_input_det_scenario$cost_biomarker <- generate_gamma(mu = 4000, sigma = 500, n = n_sim, is_psa = FALSE) 
 
 m_results_det_scenario_8 <- f_model(df_input_det_scenario)
 
@@ -166,7 +172,7 @@ cat("\n")
 obj_icers_det_scenario_0 
 
 cat("\n")
-cat("Deterministic scenario 1: Perfect biomarker diagnostic accuracy")
+cat("Deterministic scenario 1: Imperfect biomarker diagnostic accuracy")
 cat("\n")
 
 obj_icers_det_scenario_1 
@@ -210,7 +216,7 @@ obj_icers_det_scenario_7
 cat("\n")
 
 cat("\n")
-cat("Deterministic scenario 8: Decreased biomarker costs")
+cat("Deterministic scenario 8: Alternative biomarker costs")
 cat("\n")
 
 obj_icers_det_scenario_8
@@ -339,7 +345,7 @@ obj_icers_prob_scenario_0 <- calculate_icers( # create calculate_icers object
   strategies = v_treatments # vector of strategy names
 ) # calculate_icers end
 
-##### 1: prob_scenario: Perfect biomarker diagnostic accuracy ##### 
+##### 1: prob_scenario: Imperfect biomarker diagnostic accuracy ##### 
 m_results_prob_scenario_1 <- matrix( # Matrix to store result 
   data = NA,
   nrow = n_sim,
@@ -349,8 +355,14 @@ m_results_prob_scenario_1 <- matrix( # Matrix to store result
 
 df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
 
-df_input_prob_scenario$p_se_biomarker <- 1
-df_input_prob_scenario$p_sp_biomarker <- 1
+df_input_prob_scenario$p_se_biomarker <- generate_sp_se_cor(
+  mean_sens = 0.850, mean_spec = 0.680,
+  sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,
+  n = n_sim, is_psa = TRUE, seed = 1234)[,1]
+df_input_prob_scenario$p_sp_biomarker <- generate_sp_se_cor(
+  mean_sens = 0.850, mean_spec = 0.680,
+  sd_sens = 0.005, sd_spec = 0.011, rho = -0.50,
+  n = n_sim, is_psa = TRUE, seed = 1234)[,2]
 
 for (x in 1:n_sim) m_results_prob_scenario_1[x, ] <- f_model(df_input_prob_scenario[x, ])
 
@@ -510,7 +522,7 @@ obj_icers_prob_scenario_7 <- calculate_icers( # create calculate_icers object
   strategies = v_treatments # vector of strategy names
 ) # calculate_icers end
 
-##### 8: prob_scenario: Decreased biomarker costs ##### 
+##### 8: prob_scenario: Alternative biomarker costs ##### 
 m_results_prob_scenario_8 <- matrix( # Matrix to store result 
   data = NA,
   nrow = n_sim,
@@ -520,7 +532,7 @@ m_results_prob_scenario_8 <- matrix( # Matrix to store result
 
 df_input_prob_scenario <- f_input(n_sim = n_sim, setting = n_setting)
 
-df_input_prob_scenario$cost_biomarker <- generate_gamma(4000, 500, n_sim, TRUE)
+df_input_prob_scenario$cost_biomarker <- generate_gamma(mu = 4000, sigma = 500, n = n_sim, is_psa = TRUE) 
 
 for (x in 1:n_sim) m_results_prob_scenario_8[x, ] <- f_model(df_input_prob_scenario[x, ])
 
@@ -568,7 +580,7 @@ cat("\n")
 obj_icers_prob_scenario_0
 
 cat("\n")
-cat("Probabilistic scenario analysis 1: Perfect biomarker diagnostic accuracy")
+cat("Probabilistic scenario analysis 1: Imperfect biomarker diagnostic accuracy")
 cat("\n")
 
 obj_icers_prob_scenario_1
@@ -612,7 +624,7 @@ obj_icers_prob_scenario_7
 cat("\n")
 
 cat("\n")
-cat("Probabilistic scenario 8: Decreased biomarker costs")
+cat("Probabilistic scenario 8: Alternative biomarker costs")
 cat("\n")
 
 obj_icers_prob_scenario_8

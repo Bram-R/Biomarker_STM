@@ -1,42 +1,68 @@
-f_wrapper_sa <- function(params, wtp = 30000) {
-  #' Wrapper Function for Sensitivity Analysis
+f_run_sa <- function(params, wtp) {
+  #' Run the model for deterministic sensitivity analysis
   #'
-  #' This function serves as a wrapper for conducting sensitivity analyses using the `dampack` package. 
-  #' It runs the `f_model()` function with a given set of parameters and structures the results 
-  #' for cost-effectiveness analysis, including incremental outcomes.
+  #' Evaluates the health economic model for a single parameter set and formats
+  #' the results as a cost-effectiveness table suitable for deterministic
+  #' sensitivity analysis and other post-processing routines.
   #'
-  #' @param params A named list containing model parameters.
-  #' @param wtp A numeric value representing the willingness-to-pay (WTP) threshold 
-  #' for cost-effectiveness analysis (default: 30000).
+  #' The returned data frame contains total costs, QALYs and net monetary
+  #' benefit (NMB) for each diagnostic strategy, together with incremental
+  #' cost-effectiveness outcomes.
+  #'
+  #' @param params Named list (or single row of the data frame returned by
+  #'   `f_input()`) containing one complete set of model parameters.
+  #' @param wtp Numeric. Willingness-to-pay threshold used to calculate net
+  #'   monetary benefit.
   #'
   #' @details
-  #' This function executes a single simulation of `f_model()` and extracts key cost-effectiveness 
-  #' outcomes, including costs, QALYs, and incremental cost-effectiveness ratios (iCERs). 
-  #' It is designed for use with deterministic one-way sensitivity analysis (OWSA) using 
+  #' The function evaluates `f_model()` for a single parameter set and
+  #' reformats the model outputs into a data frame compatible with
+  #' deterministic sensitivity analysis workflows, including
   #' `dampack::run_owsa_det()`.
   #'
-  #' The output includes:
+  #' For each diagnostic strategy, the following outcomes are reported:
   #' \itemize{
-  #'   \item **Total costs and QALYs** for each treatment strategy.
-  #'   \item **Net monetary benefit (NMB)** for each strategy, computed as:  
-  #'         \eqn{NMB = (QALYs \times WTP) - Costs}.
-  #'   \item **Incremental outcomes**, including:
-  #'     \itemize{
-  #'       \item Incremental QALYs (\code{iQALY}).
-  #'       \item Incremental costs (\code{iCost}).
-  #'       \item Incremental cost-effectiveness ratio (\code{iCER}).
-  #'       \item Incremental net monetary benefit (\code{iNMB}).
-  #'     }
+  #'   \item Total discounted costs.
+  #'   \item Total discounted QALYs.
+  #'   \item Net monetary benefit (NMB).
+  #'   \item Incremental costs.
+  #'   \item Incremental QALYs.
+  #'   \item Incremental cost-effectiveness ratio (ICER).
+  #'   \item Incremental net monetary benefit (INMB).
   #' }
   #'
-  #' @return A data frame with cost-effectiveness results, including:
-  #' \itemize{
-  #'   \item \code{Option}: Treatment strategy.
-  #'   \item \code{QALY}: Quality-adjusted life years.
-  #'   \item \code{Cost}: Total cost.
-  #'   \item \code{NMB}: Net monetary benefit.
-  #'   \item \code{iQALY}, \code{iCost}, \code{iCER}, \code{iNMB}: Incremental outcomes.
+  #' Net monetary benefit is calculated as:
+  #' \deqn{
+  #' NMB = (QALYs \times WTP) - Costs
   #' }
+  #'
+  #' @return A data frame with one row per diagnostic strategy containing:
+  #' \itemize{
+  #'   \item `Option`
+  #'   \item `Cost`
+  #'   \item `QALY`
+  #'   \item `NMB`
+  #'   \item `iCost`
+  #'   \item `iQALY`
+  #'   \item `iCER`
+  #'   \item `iNMB`
+  #' }
+  #'
+  #' @seealso
+  #' `f_model()` for evaluating a single parameter set.
+  #'
+  #' `f_input()` for generating model input parameters.
+  #'
+  #' @examples
+  #' df_input <- f_input(
+  #'   n_sim = 1,
+  #'   setting = 3
+  #' )
+  #'
+  #' f_run_sa(
+  #'   params = df_input[1, ],
+  #'   wtp = 30000
+  #' )
   #'
   #' @export
   
@@ -58,73 +84,101 @@ f_wrapper_sa <- function(params, wtp = 30000) {
   return(df_results)
 }
 
-f_wrapper_intermediate <- function(df_input) {
-  #' Wrapper Function for Extracting Intermediate Simulation Results
+f_run_intermediate <- function(params) {
+  #' Run the model for multiple parameter sets and collect intermediate outputs
   #'
-  #' This function runs the `f_model()` function for multiple parameter sets (simulations) 
-  #' and extracts the intermediate cycle-level results into a structured 3D array.
+  #' Evaluates the health economic model for multiple parameter sets and stores
+  #' the intermediate cycle-level outputs returned by `f_model()` in a
+  #' three-dimensional array.
   #'
-  #' @param df_input A data frame where each row represents a set of model parameters 
-  #' to be used in separate simulations.
+  #' This wrapper is primarily intended for probabilistic sensitivity analysis
+  #' (PSA), model validation and visualization of cycle-level outcomes.
   #'
-  #' @details 
-  #' This function iterates over each row in `df_input`, passing the corresponding parameters 
-  #' to `f_model()` with `intermediate = TRUE`. The results from each simulation are stored 
-  #' in a 3D array with the following structure: `cycles, outcomes, simulations`. Here outcomes are Costs, 
-  #' QALYs and LYs/incidence are further specified by: 
+  #' @param params A data frame containing one complete set of model parameters
+  #'   per row, typically generated by `f_input()`.
+  #'
+  #' @details
+  #' The function iterates over all rows in `params`, evaluates
+  #' `f_model(intermediate = TRUE)` for each parameter set, and combines the
+  #' resulting matrices into a three-dimensional array with dimensions:
+  #'
   #' \itemize{
-  #'   \item **Health state**: Costs, QALYs and LYs associated with health state occupancy.
-  #'   \item **Toxicity**: Costs, QALYs and incidence associated with the occurrence of toxicities (either decreased HRQoL, costs related to toxicity management or toxicity incidence).
-  #'   \item **Event**: One-off costs and QALYs, i.e. treatment costs, toxicity prevention costs (e.g. arm sleeve) as well as one-off costs related to the development of recurrence (either loco-regional or distant) as well as mortality. 
+  #'   \item Cycles.
+  #'   \item Intermediate model outputs.
+  #'   \item Simulations.
   #' }
   #'
-  #' @return A 3D array of dimension `(cycles, outcomes, simulations)`, where:
+  #' Intermediate outputs include cycle-level:
   #' \itemize{
-  #'   \item **Dimension 1 (rows)**: Simulation cycles (e.g., months or years).
-  #'   \item **Dimension 2 (columns)**: Outcomes tracked, including costs, QALYs, and Markov traces/LYs.
-  #'   \item **Dimension 3 (depth)**: Individual simulations (one per row in `df_input`).
+  #'   \item Health-state costs.
+  #'   \item Treatment costs.
+  #'   \item Event costs.
+  #'   \item Health-state QALYs.
+  #'   \item Markov trace (state occupancy).
   #' }
+  #'
+  #' @return A three-dimensional array with dimensions
+  #' `(cycles, outputs, simulations)`, where:
+  #' \itemize{
+  #'   \item Dimension 1 represents model cycles.
+  #'   \item Dimension 2 contains the intermediate outputs returned by
+  #'         `f_model(intermediate = TRUE)`.
+  #'   \item Dimension 3 represents individual parameter sets (simulations).
+  #' }
+  #'
+  #' @seealso
+  #' \code{\link{f_input}} for generating model input parameters.
+  #'
+  #' \code{\link{f_model}} for evaluating a single parameter set.
+  #'
+  #' @examples
+  #' # Generate deterministic inputs
+  #' df_input <- f_input(
+  #'   n_sim = 10,
+  #'   setting = 3
+  #' )
+  #'
+  #' # Run the model for all parameter sets
+  #' a_results <- f_run_intermediate(df_input)
+  #'
+  #' dim(a_results)
   #'
   #' @export
   
   # create array to store results; 3 dimensions (cycles, outcomes, simulations)
   a_results <- array(data = NA, 
                      dim = c(n_t + 1, # number of cycles
-                             3 * n_treatments * (length(v_states) + length(v_tox) + 1), # number of results (number of outcomes * number of treatments * number of health states/events/toxicities)
-                             dim(df_input)[1] # number of simulations
+                             3 * n_treatments * (length(v_states) + 2) - 4, # number of results (number of outcomes * number of treatments * number of health states/events/toxicities)
+                             dim(params)[1] # number of simulations
                      ), # close dim
                      dimnames = list( # name dimensions
                        paste0("cycle_", 1:(n_t + 1)),
                        c(paste0("Cost_", v_states, "_", v_treatments[1]),   # Cost per health state for t1
-                         paste0("Cost_", v_tox, "_", v_treatments[1]),      # Tox cost for t1
+                         paste0("Cost_treatment_", v_treatments[1]),        # Treatment cost for t1
                          paste0("Cost_Event_", v_treatments[1]),            # Event cost for t1
                          
                          paste0("Cost_", v_states, "_", v_treatments[2]),   # Cost per health state for t2
-                         paste0("Cost_", v_tox, "_", v_treatments[2]),      # Tox cost for t2
+                         paste0("Cost_treatment_", v_treatments[2]),        # Treatment cost for t2
                          paste0("Cost_Event_", v_treatments[2]),            # Event cost for t2
                          
                          paste0("QALY_", v_states, "_", v_treatments[1]),   # QALYs per health state for t1
-                         paste0("QALY_", v_tox, "_", v_treatments[1]),      # Tox QALY for t1
+                         paste0("QALY_treatment_", v_treatments[1]),        # Treatment QALY for t1
                          paste0("QALY_Event_", v_treatments[1]),            # Event QALY for t1
                          
                          paste0("QALY_", v_states, "_", v_treatments[2]),   # QALYs per health state for t2
-                         paste0("QALY_", v_tox, "_", v_treatments[2]),      # Tox QALY for t2
+                         paste0("QALY_treatment_", v_treatments[2]),        # Treatment QALY for t2
                          paste0("QALY_Event_", v_treatments[2]),            # Event QALY for t2
                          
-                         paste0("LY_", v_states, "_", v_treatments[1]),     # LYs per health state for t1 (Markov trace)
-                         paste0("Incidence_", v_tox, "_", v_treatments[1]), # Tox incidence for t1
-                         paste0("LY_Event_", v_treatments[1]),              # Event LYs for t1
+                         paste0("Trace_", v_states, "_", v_treatments[1]),  # State occupancy per health state for t1 (Markov trace)
                          
-                         paste0("LY_", v_states, "_", v_treatments[2]),     # LYs per health state for t2 (Markov trace)
-                         paste0("Incidence_", v_tox, "_", v_treatments[2]), # Tox incidence for t2
-                         paste0("LY_Event_", v_treatments[2])               # Event LYs for t2
+                         paste0("Trace_", v_states, "_", v_treatments[2])   # State occupancy per health state for t2 (Markov trace)
                        ), # end c
-                       paste0("sim_", 1:dim(df_input)[1])
+                       paste0("sim_", 1:dim(params)[1])
                      ) # close dimnames 
   ) # end array 
   
   # Run model simulation
-  for (x in 1:dim(df_input)[1]) a_results[,,x ] <- f_model(df_input[x, ], intermediate = TRUE)
+  for (x in 1:dim(params)[1]) a_results[,,x ] <- f_model(params[x, ], intermediate = TRUE)
   
   return(a_results)
 }

@@ -19,7 +19,7 @@ df_input <- f_input(n_sim = n_sim, setting = n_setting)
 # - Event: One-off costs and QALYs, i.e. treatment costs, toxicity prevention costs (e.g. arm sleeve) as well as one-off costs related to the development of recurrence (either loco-regional or distant) as well as mortality. 
 
 # Probabilistic results (intermediate)
-a_out_interm <- f_wrapper_intermediate(df_input)
+a_out_interm <- f_run_intermediate(df_input)
 
 # str(a_out_interm[,,]) # inspect
 # names(a_out_interm[1, , 1]) # inspect
@@ -28,15 +28,15 @@ a_out_interm <- f_wrapper_intermediate(df_input)
 v_res <- rowMeans(colSums(a_out_interm, dims = 1))
 v_res
 
-# Validate intermediate outcomes (comparing the results below with the probabilistic base-case results: v_out_mean)
-# sum(v_res[1:9])
-# sum(v_res[10:18])
-# sum(v_res[1:9]) - sum(v_res[10:18])
-# sum(v_res[19:27])
-# sum(v_res[28:36])
-# sum(v_res[19:27]) - sum(v_res[28:36])
-# v_res[1:9] - v_res[10:18] # check intermediate difference in costs
-# v_res[19:27] - v_res[28:36] # check intermediate difference in qalys
+# Validate intermediate outcomes (comparing the results below with the probabilistic base-case results: v_results_mean)
+# sum(v_res[1:14])
+# sum(v_res[15:28])
+# sum(v_res[1:14]) - sum(v_res[15:28])
+# sum(v_res[29:42])
+# sum(v_res[43:56])
+# sum(v_res[29:42]) - sum(v_res[43:56])
+v_res[1:14] - v_res[15:28] # check intermediate difference in costs
+v_res[29:42] - v_res[43:56] # check intermediate difference in qalys
 
 # Create df_tmp (required for dfSummary())
 df_tmp <- as.data.frame(t(colSums(a_out_interm, dims = 1)))
@@ -62,12 +62,12 @@ rm(df_tmp, txt)
 
 ##### Costs and QALYs per cycle ----
 a_out_cycle_res <- array(
-  c(apply(a_out_interm[, 1:9, ], c(1, 3), sum),
-    apply(a_out_interm[, 10:18, ], c(1, 3), sum),
-    apply(a_out_interm[, 19:27, ], c(1, 3), sum),
-    apply(a_out_interm[, 28:36, ], c(1, 3), sum)
+  c(apply(a_out_interm[, 1:14, ], c(1, 3), sum),
+    apply(a_out_interm[, 15:28, ], c(1, 3), sum),
+    apply(a_out_interm[, 29:42, ], c(1, 3), sum),
+    apply(a_out_interm[, 43:56, ], c(1, 3), sum)
   ),
-  dim = c(481, 5000, 4)
+  dim = c(dim(a_out_interm)[1], dim(a_out_interm)[2], 4)
 )
 
 a_out_cycle_res <- aperm(a_out_cycle_res, perm = c(1, 3, 2))
@@ -236,124 +236,55 @@ legend(
 )
 dev.off()
 
-##### Toxicity per cycle ----
-m_toxicity <- rowMeans(a_out_interm[, c(41:44, 50:53), ], dims = 2)
-m_toxicity_percentiles <- cbind(
-  rowQuantiles(a_out_interm[, 41, ], probs = c(0.025, 0.975)),
-  rowQuantiles(a_out_interm[, 42, ], probs = c(0.025, 0.975)),
-  rowQuantiles(a_out_interm[, 43, ], probs = c(0.025, 0.975)),
-  rowQuantiles(a_out_interm[, 44, ], probs = c(0.025, 0.975)),
-  rowQuantiles(a_out_interm[, 50, ], probs = c(0.025, 0.975)),
-  rowQuantiles(a_out_interm[, 51, ], probs = c(0.025, 0.975)),
-  rowQuantiles(a_out_interm[, 52, ], probs = c(0.025, 0.975)),
-  rowQuantiles(a_out_interm[, 53, ], probs = c(0.025, 0.975))
-)
+##### State occupancy per cycle ----
+m_trace <- rowMeans(a_out_interm[, 57:80, ], dims = 2)
 
-# Toxicity incidence
-png(file = paste0("plots/Setting_", n_setting, "_tox_vs_time", ".png"), width = 1500, height = 1500)
-matplot(
-  x = 0:n_t,
-  y = m_toxicity[, 1:8], 
-  ylim = c(0, 0.1),
-  type = "l",
-  ylab = "Toxicity incidence (conditional on being alive)",
-  xlab = "Cycle",
-  main = paste0("Average toxicity incidence for ", v_treatments[1], " and ", v_treatments[2]),
-  col = rep(2:5, 2),
-  lty = c(rep(1, 4), rep(2, 4))
-) # matplot end
-legend(
-  "topleft", 
-  inset = c(0.05, 0),
-  dimnames(m_toxicity[, 1:8])[[2]], 
-  cex = 0.75,
-  col = rep(2:5,2), 
-  lty =  c(rep(1, 4), rep(2, 4)),
-  bty = "n"
-) # legend end
-dev.off()
-
-# Arm lymphedema incidence
-png(file = paste0("plots/Setting_", n_setting, "_arm_lymphedema_vs_time", ".png"), width = 600, height = 350)
-matplot(
-  x = 0:n_t,
-  y = cbind(
-    m_toxicity[, 1],
-    m_toxicity_percentiles[, 1], 
-    m_toxicity_percentiles[, 2],
-    m_toxicity[, 5],
-    m_toxicity_percentiles[, 9], 
-    m_toxicity_percentiles[, 10]
-  ),
-  type = "l",
-  ylab = "Arm lymphedema incidence (conditional on being alive)",
-  xlab = "Cycle",
-  xlim = c(0, 100),
-  main = "Arm lymphedema incidence (conditional on being alive)",
-  col = c(2, 2, 2, 3, 3, 3),
-  lty = c(1, 2, 2, 1, 2, 2)
-)
-legend(
-  "topright", 
-  inset = c(0.05, 0),
-  c(paste0("Probabilistic mean ", v_treatments[1]), dimnames(m_toxicity_percentiles[, 1:2])[[2]],
-    paste0("Probabilistic mean ", v_treatments[2]), dimnames(m_toxicity_percentiles[, 1:2])[[2]]),
-  cex = 0.5,
-  col = c(2, 2, 2, 3, 3, 3),
-  lty = c(1, 2, 2, 1, 2, 2),
-  bty = "n"
-)
-dev.off()
-
-##### LYs cycle ----
-m_trace <- rowMeans(a_out_interm[, c(37:40, 46:49), ], dims = 2)
-
-# Probabilistic LYs
+# Probabilistic state occupancy
 png(file = paste0("plots/Setting_", n_setting, "_ly_by_hs_vs_time", ".png"), width = 1500, height = 1500)
 matplot(
   x = 0:n_t,
-  y = m_trace[, 1:8], 
-  #ylim = c(0, 1),
+  y = m_trace, 
+  ylim = c(0, 1),
   type = "l",
   ylab = "LYs",
   xlab = "Cycle",
   main = paste0("Average LYs for ", v_treatments[1], " and ", v_treatments[2]),
-  col = rep(2:5, 2),
-  lty = c(rep(1, 4), rep(2, 4))
+  col = rep(2:7, 4), 
+  lty =  c(rep(2, 6), rep(3, 6), rep(4, 6), rep(6, 6))
 ) # matplot end
 legend(
   "topleft", 
   inset = c(0.05, 0),
-  dimnames(m_trace[, 1:8])[[2]], 
+  dimnames(m_trace)[[2]], 
   cex = 0.75,
-  col = rep(2:5,2), 
-  lty =  c(rep(1, 4), rep(2, 4)),
+  col = rep(2:7, 4), 
+  lty =  c(rep(2, 6), rep(3, 6), rep(4, 6), rep(6, 6)),
   bty = "n"
 ) # legend end
 dev.off()
 
 ##### Disaggregated costs and QALYs per cycle ----
-m_out_dis_cycle_res <- rowMeans(a_out_interm[, 1:36, ], dims = 2)
+m_out_dis_cycle_res <- rowMeans(a_out_interm[, 1:56, ], dims = 2)
 
 # Health state costs
 png(file = paste0("plots/Setting_", n_setting, "_costs_by_hs_vs_time", ".png"), width = 1500, height = 1500)
 matplot(
   x = 0:n_t,
-  y = m_out_dis_cycle_res[, 1:18], 
+  y = m_out_dis_cycle_res[, 1:28], 
   type = "l",
   ylab = "Costs",
   xlab = "Cycle",
   main = paste0("Average health state costs for ", v_treatments[1], " and ", v_treatments[2]),
-  col = rainbow(9),
-  lty = c(rep(1, 9), rep(2, 9))
+  col = rainbow(14),
+  lty = c(rep(2, 14), rep(4, 14))
 ) # matplot end
 legend(
   "topright", 
   inset = c(0.05, 0),
   dimnames(m_out_dis_cycle_res[, 1:18])[[2]], 
   cex = 0.75,
-  col = rainbow(9), 
-  lty =  c(rep(1, 9), rep(2, 9)),
+  col = rainbow(14),
+  lty = c(rep(2, 14), rep(4, 14)),
   bty = "n"
 ) # legend end
 dev.off()
@@ -362,22 +293,22 @@ dev.off()
 png(file = paste0("plots/Setting_", n_setting, "_qalys_by_hs_vs_time", ".png"), width = 1500, height = 1500)
 matplot(
   x = 0:n_t,
-  y = m_out_dis_cycle_res[, 19:36], 
+  y = m_out_dis_cycle_res[, 29:56], 
   #ylim = c(0, 1),
   type = "l",
   ylab = "Costs",
   xlab = "Cycle",
   main = paste0("Average health state QALYs ", v_treatments[1], " and ", v_treatments[2]),
-  col = rainbow(9),
-  lty = c(rep(1, 9), rep(2, 9))
+  col = rainbow(14),
+  lty = c(rep(2, 14), rep(4, 14))
 ) # matplot end
 legend(
   "topright", 
   inset = c(0.05, 0),
   dimnames(m_out_dis_cycle_res[, 19:36])[[2]], 
   cex = 0.75,
-  col = rainbow(9), 
-  lty =  c(rep(1, 9), rep(2, 9)),
+  col = rainbow(14),
+  lty = c(rep(2, 14), rep(4, 14)),
   bty = "n"
 ) # legend end
 dev.off()

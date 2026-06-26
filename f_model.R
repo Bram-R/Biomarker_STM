@@ -1,75 +1,77 @@
 f_model <- function(params, intermediate = FALSE) {
-  #' State-Transition Model
+  #' Run the decision tree and state-transition model
   #'
-  #' This function simulates a state-transition model using a Markov framework. It calculates 
-  #' the expected costs, quality-adjusted life years (QALYs), and life-years (LYs) for two 
-  #' treatment strategies over a specified time horizon.
+  #' Evaluates the health economic model for a single parameter set. The model
+  #' combines a diagnostic decision tree with a cohort state-transition model to
+  #' estimate discounted costs, quality-adjusted life-years (QALYs) and
+  #' life-years (LYs) for two competing diagnostic strategies.
   #'
-  #' @param params A named list containing model parameters, including:
-  #' \itemize{
-  #'   \item **Transition Probabilities:**
-  #'     \itemize{
-  #'       \item \code{tp_ef_ef}: Probability of remaining in "Event-Free".
-  #'       \item \code{p_event_lrr}, \code{p_event_death}: Probability of event being locoregional recurrence (LRR) or death.
-  #'       \item \code{tp_lrr_dm}, \code{tp_lrr_death}: Probability of transitioning from LRR to distant metastasis (DM) or death.
-  #'       \item \code{tp_dm_death}: Probability of transitioning from DM to death.
-  #'     }
-  #'   \item **Health State Utilities:**
-  #'     \itemize{
-  #'       \item \code{utility_ef}, \code{utility_lrr}, \code{utility_dm}, \code{utility_death}: QALY weights per state.
-  #'     }
-  #'   \item **Costs:**
-  #'     \itemize{
-  #'       \item \code{cost_t1}, \code{cost_t2}: Strategy-specific costs.
-  #'       \item \code{cost_ef_y6}, \code{cost_lrr}, \code{cost_dm}, \code{cost_death}: Costs per health state.
-  #'       \item \code{cost_lrr_event}, \code{cost_dm_event}, \code{cost_death_event}: Event-related costs.
-  #'       \item \code{cost_prev_arm_lymphedema_event}, \code{cost_prev_pain_event}, \code{cost_prev_fatigue_event}, \code{cost_prev_fibrosis_induration_event}: Costs of toxicity prevention.
-  #'     }
-  #'   \item **Discount Rates:**
-  #'     \itemize{
-  #'       \item \code{discount_costs}, \code{discount_qalys}, \code{discount_lys}: Discount rates for costs, QALYs, and life-years.
-  #'     }
-  #' }
+  #' The decision tree classifies individuals as true positives, false
+  #' positives, false negatives or true negatives according to disease
+  #' prevalence and test performance. Each subgroup then enters its
+  #' corresponding state-transition model, after which outcomes are aggregated
+  #' across all diagnostic pathways.
   #'
-  #' @param intermediate Logical. If \code{FALSE} (default), the function returns a named vector of total 
-  #' costs, QALYs, and LYs for each treatment strategy. If \code{TRUE}, it returns detailed 
-  #' intermediate cycle-level outputs in a matrix format for further analysis.
+  #' @param params Named list (or single row of the data frame returned by
+  #'   `f_input()`) containing one complete set of model parameters.
+  #' @param intermediate Logical. If `FALSE` (default), returns aggregate
+  #'   discounted costs, QALYs and life-years for both diagnostic strategies.
+  #'   If `TRUE`, returns cycle-level model outputs for validation, debugging
+  #'   and visualization.
   #'
   #' @details
-  #' This function:
-  #' \itemize{
-  #'   \item Defines transition matrices for each treatment.
-  #'   \item Ensures transition probabilities are consistent (e.g., adjusting for background mortality).
-  #'   \item Estimates state transitions.
-  #'   \item Estimates **toxicities over time** using `f_interpolate_toxicity()`.
-  #'   \item Computes **discounted costs, QALYs, and LYs** for each treatment strategy.
-  #'   \item Returns either a named vector with aggregate results or a matrix with detailed cycle-level outputs.
+  #' The function performs the following steps:
+  #' \enumerate{
+  #'   \item Calculates the decision tree probabilities based on disease
+  #'         prevalence and diagnostic accuracy.
+  #'   \item Derives transition probabilities, incorporating treatment effects
+  #'         and constraints based on general population mortality.
+  #'   \item Simulates the cohort state-transition model over the specified
+  #'         time horizon.
+  #'   \item Applies health-state costs, treatment costs, event costs,
+  #'         utilities and country-specific discounting.
+  #'   \item Aggregates discounted costs, QALYs and life-years for each
+  #'         diagnostic strategy.
   #' }
   #'
-  #' @return 
-  #' If \code{intermediate = FALSE}, returns a named vector containing:
-  #' \itemize{
-  #'   \item \code{Cost_Current_practice}, \code{Cost_New_treatment}
-  #'   \item \code{QALY_Current_practice}, \code{QALY_New_treatment}
-  #'   \item \code{LY_Current_practice}, \code{LY_New_treatment}
-  #' }
+  #' The function evaluates a single parameter set. Probabilistic sensitivity
+  #' analysis is performed by repeatedly calling `f_model()` for each row of the
+  #' output generated by `f_input()`.
   #'
-  #' If \code{intermediate = TRUE}, returns a **matrix** containing:
+  #' @return
+  #' If `intermediate = FALSE`, a named numeric vector containing discounted:
   #' \itemize{
-  #'   \item **Cycle-level health state costs, toxicity costs, and event costs** for each treatment.
-  #'   \item **Cycle-level QALYs and LYs** for each treatment.
-  #'   \item **Markov trace** (state occupancy probabilities) for each treatment.
-  #'   \item **Toxicity prevalence over time** for each treatment.
+  #'   \item Total costs.
+  #'   \item Total QALYs.
+  #'   \item Total life-years.
+  #' }
+  #' for both diagnostic strategies.
+  #'
+  #' If `intermediate = TRUE`, a matrix containing cycle-level model outputs,
+  #' including:
+  #' \itemize{
+  #'   \item Health-state costs.
+  #'   \item Treatment costs.
+  #'   \item Event costs.
+  #'   \item Health-state QALYs.
+  #'   \item State occupancy (Markov trace).
   #' }
   #'
   #' @examples
-  #' # Run model with aggregate results
-  #' results <- f_model(f_input(n_sim = 1))
-  #' print(results)
+  #' # Generate deterministic inputs
+  #' df_input <- f_input(
+  #'   n_sim = 1,
+  #'   setting = 3
+  #' )
   #'
-  #' # Run model with intermediate results
-  #' results_intermediate <- f_model(f_input(n_sim = 1), intermediate = TRUE)
-  #' head(results_intermediate)
+  #' # Evaluate the model
+  #' f_model(df_input[1, ])
+  #'
+  #' # Return cycle-level outputs
+  #' f_model(
+  #'   df_input[1, ],
+  #'   intermediate = TRUE
+  #' )
   #'
   #' @export
   
@@ -321,7 +323,7 @@ f_model <- function(params, intermediate = FALSE) {
   #### Results ----
   if(intermediate == FALSE) { 
     v_results <- setNames(
-      c(rowSums(a_costs) + rowSums(m_event_costs) + rowSums(a_tx_costs),  
+      c(rowSums(a_costs) + rowSums(a_tx_costs) + rowSums(m_event_costs),  
         rowSums(a_qalys), 
         rowSums(a_lys)
       ), # end c     
@@ -335,70 +337,55 @@ f_model <- function(params, intermediate = FALSE) {
     m_res_intermediate <- 
       matrix(data = NA, 
              nrow = n_t + 1, # number of cycles
-             ncol = 3 * n_treatments * (length(v_states) + length(v_tox) + 1), # number of results (number of outcomes * number of treatments * number of health states/events/toxicities)
+             ncol = 3 * n_treatments * (length(v_states) + 2) - 4,  # number of results (number of outcomes * number of treatments * number of health states/events/toxicities)
              dimnames = list( # name dimensions
                paste0("cycle_", 1:(n_t + 1)),
                c(paste0("Cost_", v_states, "_", v_treatments[1]),   # Cost per health state for t1
-                 paste0("Cost_", v_tox, "_", v_treatments[1]),      # Tox cost for t1
+                 paste0("Cost_treatment_", v_treatments[1]),        # Treatment cost for t1
                  paste0("Cost_Event_", v_treatments[1]),            # Event cost for t1
                  
                  paste0("Cost_", v_states, "_", v_treatments[2]),   # Cost per health state for t2
-                 paste0("Cost_", v_tox, "_", v_treatments[2]),      # Tox cost for t2
+                 paste0("Cost_treatment_", v_treatments[2]),        # Treatment cost for t2
                  paste0("Cost_Event_", v_treatments[2]),            # Event cost for t2
                  
                  paste0("QALY_", v_states, "_", v_treatments[1]),   # QALYs per health state for t1
-                 paste0("QALY_", v_tox, "_", v_treatments[1]),      # Tox QALY for t1
+                 paste0("QALY_treatment_", v_treatments[1]),        # Treatment QALY for t1
                  paste0("QALY_Event_", v_treatments[1]),            # Event QALY for t1
                  
                  paste0("QALY_", v_states, "_", v_treatments[2]),   # QALYs per health state for t2
-                 paste0("QALY_", v_tox, "_", v_treatments[2]),      # Tox QALY for t2
+                 paste0("QALY_treatment_", v_treatments[2]),        # Treatment QALY for t2
                  paste0("QALY_Event_", v_treatments[2]),            # Event QALY for t2
                  
-                 paste0("LY_", v_states, "_", v_treatments[1]),     # LYs per health state for t1 (Markov trace)
-                 paste0("Incidence_", v_tox, "_", v_treatments[1]), # Tox incidence for t1
-                 paste0("LY_Event_", v_treatments[1]),              # Event LYs for t1
+                 paste0("Trace_", v_states, "_", v_treatments[1]),  # State occupancy per health state for t1 (Markov trace)
                  
-                 paste0("LY_", v_states, "_", v_treatments[2]),     # LYs per health state for t2 (Markov trace)
-                 paste0("Incidence_", v_tox, "_", v_treatments[2]), # Tox incidence for t2
-                 paste0("LY_Event_", v_treatments[2])               # Event LYs for t2
+                 paste0("Trace_", v_states, "_", v_treatments[2])   # State occupancy per health state for t2 (Markov trace)
                ) # end c
              ) # close dimnames 
       ) # end matrix 
     
     # Costs
     m_res_intermediate[, 1:n_states] <- a_costs[1,,]                                                         # health state costs t1 
-    m_res_intermediate[, (n_states + 1):(n_states + length(v_tox))] <- a_costs_tox[1,,]                      # toxicity costs t1 
-    m_res_intermediate[, (n_states + 1 + length(v_tox))] <- c(params$cost_t1 + 0,                            # event costs t1 (no n_tox_prev_costs)
-                                                              m_event_costs[1,])           
+    m_res_intermediate[, (n_states + 1)] <- rowSums(a_tx_costs[1,,])                                         # treatment costs t1 
+    m_res_intermediate[, (n_states + 2)] <- c(0, m_event_costs[1,])                                          # event costs t1 
+                                                                        
     
-    n_dim <- dim(m_res_intermediate)[2] / 3 * 0.5
-    m_res_intermediate[, n_dim + 1:n_states] <- a_costs[2,,]                                                 # health state costs t2
-    m_res_intermediate[, n_dim + (n_states + 1):(n_states + length(v_tox))] <- a_costs_tox[2,,]              # toxicity costs t2
-    m_res_intermediate[, n_dim + (n_states + 1 + length(v_tox))] <- c(params$cost_t2 + n_tox_prev_costs,     # event costs t2
-                                                                      m_event_costs[2,])    
+    m_res_intermediate[, (n_states + 2) + 1:n_states] <- a_costs[2,,]                                        # health state costs t2
+    m_res_intermediate[, (2 * n_states + 3)] <- rowSums(a_tx_costs[2,,])                                     # treatment costs t2
+    m_res_intermediate[, (2 * n_states + 4)] <- c(0, m_event_costs[2,])                                      # event costs t2
     
     # QALYs
-    n_dim <- dim(m_res_intermediate)[2] / 3 * 1 
-    m_res_intermediate[, n_dim + 1:n_states] <- a_qalys[1,,]                                                 # health state QALYs t1
-    m_res_intermediate[, n_dim + (n_states + 1):(n_states + length(v_tox))] <- a_qalys_tox[1,,]              # toxicity QALYs t1
-    m_res_intermediate[, n_dim + (n_states + 1 + length(v_tox))] <- 0                                        # event QALYs t1 (none for current practice)
+    m_res_intermediate[, (2 * n_states + 4) + 1:n_states] <- a_qalys[1,,]                                    # health state QALYs t1
+    m_res_intermediate[, (3 * n_states + 5)] <- 0                                                            # treatment QALYs t1
+    m_res_intermediate[, (3 * n_states + 6)] <- 0                                                            # event QALYs t1 
     
-    n_dim <- dim(m_res_intermediate)[2] / 3 * 1.5 
-    m_res_intermediate[, n_dim + 1:n_states] <- a_qalys[2,,]                                                 # health state QALYs t2
-    m_res_intermediate[, n_dim + (n_states + 1):(n_states + length(v_tox))] <- a_qalys_tox[2,,]              # toxicity QALYs t2
-    m_res_intermediate[, n_dim + (n_states + 1 + length(v_tox))] <- c(n_tox_prev_disutility, rep(0, n_t)) +  # event QALYs t2 including process utility  
-      v_process_utility
+    m_res_intermediate[, (3 * n_states + 6) + 1:n_states] <- a_qalys[2,,]                                    # health state QALYs t2
+    m_res_intermediate[, (4 * n_states + 7)] <- 0                                                            # treatment QALYs t2
+    m_res_intermediate[, (4 * n_states + 8)] <- 0                                                            # event QALYs t2 
     
-    # LYs / incidence
-    n_dim <- dim(m_res_intermediate)[2] / 3 * 2 
-    m_res_intermediate[, n_dim + 1:n_states] <- cbind(a_lys[1,,], rep(0, n_t + 1))                           # health state LYs t1
-    m_res_intermediate[, n_dim + (n_states + 1):(n_states + length(v_tox))] <- a_toxicity[1,,]               # toxicity incidence t1
-    m_res_intermediate[, n_dim + (n_states + 1 + length(v_tox))] <- 0                                        # event LYs t1 (none)
+    # Health state occupancy 
+    m_res_intermediate[, (4 * n_states + 8) + 1:n_states] <- a_state_trace[1, , ]                            # health state occupancy t1 
     
-    n_dim <- dim(m_res_intermediate)[2] / 3 * 2.5 
-    m_res_intermediate[, n_dim + 1:n_states] <- cbind(a_lys[2,,], rep(0, n_t + 1))                           # health state LYs t2
-    m_res_intermediate[, n_dim + (n_states + 1):(n_states + length(v_tox))] <- a_toxicity[2,,]               # toxicity incidence t2
-    m_res_intermediate[, n_dim + (n_states + 1 + length(v_tox))] <- 0                                        # event LYs t1 (none)  
+    m_res_intermediate[, (5 * n_states + 8) + 1:n_states] <- a_state_trace[2, , ]                            # health state occupancy t2
     
     return(m_res_intermediate)
     
@@ -407,12 +394,7 @@ f_model <- function(params, intermediate = FALSE) {
     # Returns TRUE if at least one NA exists
     
     # Check if there are any negative values
-    # any(m_res_intermediate[, 1:9] < 0)
-    # any(m_res_intermediate[, 10:18] < 0)
-    # any(m_res_intermediate[, 19:27] < 0) # these might be negative (disutilies)
-    # any(m_res_intermediate[, 28:36] < 0) # these might be negative (disutilies)
-    # any(m_res_intermediate[, 37:45] < 0)
-    # any(m_res_intermediate[, 46:54] < 0)
+    # any(m_res_intermediate < 0)
     
   } # close if statement
 }
