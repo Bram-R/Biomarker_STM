@@ -11,13 +11,7 @@ source("Model setup.R")            # Model setup and definitions
 # Create a dataframe for probabilistic sensitivity analysis (PSA) inputs
 df_input <- f_input(n_sim = n_sim, setting = n_setting)
 
-##### Obtain intermediate results using wrapper intermediate function ----
-# Intermediate outcomes are stored in a 3D array with the following structure: cycles, outcomes, simulations. 
-# Here outcomes are Costs, QALYs and LYs/incidence are further specified by:
-# - Health state: Costs, QALYs and LYs associated with health state occupancy.
-# - Toxicity: Costs, QALYs and incidence associated with the occurrence of toxicities (either decreased HRQoL, costs related to toxicity management or toxicity incidence).
-# - Event: One-off costs and QALYs, i.e. treatment costs, toxicity prevention costs (e.g. arm sleeve) as well as one-off costs related to the development of recurrence (either loco-regional or distant) as well as mortality. 
-
+##### Obtain intermediate results ----
 # Probabilistic results (intermediate)
 a_out_interm <- f_run_intermediate(df_input)
 
